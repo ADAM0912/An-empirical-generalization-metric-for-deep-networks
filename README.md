@@ -9,6 +9,7 @@ This repo covers an implementation for the Generalisation Benchmarking Test for 
 ## Running
 You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to CIFAR100 by `--dataset cifar100`.  
 **(1) linear probe**
+
 First, Apply linear probe to your model and save the result for future use. 
 ```
 python linear_probe.py --batch_size 64 \
@@ -35,11 +36,11 @@ python  plot_kappa_window.py
 ```
 Some example figures of accuracy and kappa is shown below:
 <p align="center">
-  <img src="figures/accuracy.png" width="700">
+  <img src="figures/accuracy.jpg" width="700">
 </p>
 
 <p align="center">
-  <img src="figures/kappa.png" width="700">
+  <img src="figures/kappa.jpg" width="700">
 </p>
 
 **(5) Gather all your data in a three dimensional data structure and plot the margin distribution**  
@@ -47,11 +48,13 @@ We put our data in a 3d array shown below. After this, we use augmented Lagrangi
 <p align="center">
   <img src="figures/data structure.png" width="700">
 </p>
+
 ```
 python gather_acc_kappa.py
 python augmented Lagrangian.py
 python marginal_distribution.py
 ```
+
 The margin distribution example is shown below: 
 <p align="center">
   <img src="figures/tradeoff.png" width="700">
