@@ -1,6 +1,10 @@
 Generalisation Benchmarking Test for Deep Networks
 
-This repo covers an implementation for the Generalisation Benchmarking Test for Deep Networks, using CIFAR as an example:  
+This repo covers an implementation for the Generalisation Benchmarking Test for Deep Networks, using CIFAR as an example. The illustration of Benchmarking bed is shown below:
+<p align="center">
+  <img src="figures/benchbed.png" width="700">
+</p>
+
 
 ## Running
 You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to CIFAR100 by `--dataset cifar100`.  
