@@ -36,17 +36,17 @@ python  plot_kappa_window.py
 ```
 Some example figures of accuracy and kappa is shown below:
 <p align="center">
-  <img src="figures/accuracy.jpg" width="700">
+  <img src="figures/accuracy.jpg" width="500">
 </p>
 
 <p align="center">
-  <img src="figures/kappa.jpg" width="700">
+  <img src="figures/kappa.jpg" width="500">
 </p>
 
 **(5) Gather all your data in a three dimensional data structure and plot the margin distribution**  
 We put our data in a 3d array shown below. After this, we use augmented Lagrangian and find the tradeoff point and plot marginal distribution in the end. 
 <p align="center">
-  <img src="figures/data structure.png" width="700">
+  <img src="figures/data structure.png" width="500">
 </p>
 
 ```
