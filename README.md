@@ -6,12 +6,13 @@ This repo covers an implementation for the Generalisation Benchmarking Test for 
 </p>
 
 ## Installation
+To set up the environment:
 ```
 conda env create -f environment.yml
 ```
 
 ## Running
-You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to CIFAR100 by `--dataset cifar100`.  
+You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to CIFAR10 by `--dataset cifar10`.  
 **(1) linear probe**
 
 First, Apply linear probe to your model and save the result for future use. 
