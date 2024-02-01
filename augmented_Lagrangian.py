@@ -1,13 +1,8 @@
-
-
-import numpy as np
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.optimize import minimize
-from pymoo.algorithms.moo.nsga2 import NSGA2
 import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
-import cvxpy as cp
-from sklearn.cluster import DBSCAN
+
+import numpy as np
+from scipy.optimize import minimize
 
 # Define your custom problem
 data_all = pd.read_excel(('output_f1f2_distance.xlsx'), header=None)
@@ -65,9 +60,6 @@ def interpolate_f1_f2(x1, x2, x3):
     f2_interp = f2_interpolator(point)
     return f1_interp, f2_interp
 
-
-import numpy as np
-from scipy.optimize import minimize
 
 
 def objective_function(x):

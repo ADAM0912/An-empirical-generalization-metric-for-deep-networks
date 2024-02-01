@@ -1,14 +1,13 @@
-import numpy as np
+
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, ConcatDataset, Subset
 import copy
 import argparse
 from torchvision import transforms, datasets
-import pandas as pd
 import os
 import shutil
-from utils import EarlyStopping, largest_unstructured
+from utils import EarlyStopping
 import torch.nn.utils.prune as prune
 import h5py
 import torch.nn.functional as F
