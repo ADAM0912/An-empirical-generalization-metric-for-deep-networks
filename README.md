@@ -5,6 +5,10 @@ This repo covers an implementation for the Generalisation Benchmarking Test for 
   <img src="figures/benchbed.png" width="700">
 </p>
 
+## Installation
+```
+conda env create -f environment.yml
+```
 
 ## Running
 You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to CIFAR100 by `--dataset cifar100`.  
