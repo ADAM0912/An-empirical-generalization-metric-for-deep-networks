@@ -33,7 +33,7 @@ You need to modify the file location and different setting according to your sit
 python  trade_off_point.py
 
 ```
-The final result of our benchmark is like this:
+The final result of our benchmark is like this(change clip to your own testing model):
 
 | MODEL             | CLIP     |
 |-------------------|----------|
