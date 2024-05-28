@@ -34,7 +34,6 @@ python  trade_off_point.py
 
 ```
 The final result of our benchmark is like this:
-## Model Comparison
 
 | MODEL             | CLIP     |
 |-------------------|----------|
