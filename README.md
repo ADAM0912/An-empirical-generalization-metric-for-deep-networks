@@ -1,4 +1,4 @@
-Generalisation Benchmarking Test for Deep Networks
+Benchmarking Test for deep network generalization
 
 This repo covers an implementation for the Generalisation Benchmarking Test for Deep Networks, using CIFAR as an example. The illustration of Benchmarking bed is shown below:
 <p align="center">
@@ -20,47 +20,27 @@ First, Apply linear probe to your model and save the result for future use.
 python linear_probe.py --batch_size 64 \
   --learning_rate 1e-4 \
 ```
-**(2) Sample weight**  
-After you finish the linear probe part, it's time to sample the weight from the original model with any window size you want:
-```
-python Sample_weight.py --window 0.5
-```
-**(3) Calculate accuracy and kappa**  
+
+**(2) Calculate accuracy and kappa**  
 You need to modify the file location and different setting according to your situation. 
 ```
 python  calculate_accuracy.py
 python  calculate_kappa.py
 ```
-**(3) Plot accuracy and kappa with different parameter changed** 
+**(3) Find the Tradeoff point and output the bound** 
 You need to modify the file location and different setting according to your situation. 
 ```
-python  plot_accuracy_amount.py
-python  plot_accuracy_window.py
-python  plot_kappa_amount.py
-python  plot_kappa_window.py
-```
-Some example figures of accuracy and kappa is shown below:
-<p align="center">
-  <img src="figures/accuracy.jpg" width="500">
-</p>
-
-<p align="center">
-  <img src="figures/kappa.jpg" width="500">
-</p>
-
-**(5) Gather all your data in a three dimensional data structure and plot the margin distribution**  
-We put our data in a 3d array shown below. After this, we use augmented Lagrangian and find the tradeoff point and plot marginal distribution in the end. 
-<p align="center">
-  <img src="figures/data structure.png" width="500">
-</p>
+python  trade_off_point.py
 
 ```
-python gather_acc_kappa.py
-python augmented Lagrangian.py
-python marginal_distribution.py
-```
+The final result of our benchmark is like this:
+## Model Comparison
 
-The margin distribution example is shown below: 
-<p align="center">
-  <img src="figures/tradeoff.png" width="700">
-</p>
+| MODEL             | CLIP     |
+|-------------------|----------|
+| GENERALIZATION BOUND | 0.308677 |
+| DIVERSITY BOUND   | 0.293403 |
+| SSIM              | 0.65     |
+| ZERO-SHOT%        | 0        |
+| MODEL SIZE        | 38M      |
+
