@@ -1,9 +1,13 @@
 Benchmarking Test for deep network generalization
 
-This repo covers an implementation for the Generalisation Benchmarking Test for Deep Networks, using CIFAR as an example. The illustration of Benchmarking bed is shown below:
+This repo covers an implementation for the Paper An empirical generalization metric to benchmark deep networks, using CIFAR as an example. 
+
+## Introduction of the benchmark
+Currently, most efforts to estimate the generalization error bounds are enduring, there is a growing interest in intuitive metrics to measure generalization capacity experimentally. This is not only a practical request, and also important for theoretical research. This is because theoretical estimations must be verified in practice. Particularly, there is a lack of research on benchmarking various deep network generalisation capacity and verifying theoretical estimations.  This paper aims to introduce an empirical generalization metric for benchmarking various deep networks, and proposes a novel testbed for verifying theoretical estimations. Our observation underscores that a deep network's generalization capacity in classical classification scenarios hinges on both classification accuracy and the diversity of unseen data. The proposed metric system can quantify model accuracy and data diversity, offering an intuitive and quantitative assessment, that is, trade-off point. Moreover, we compare our empirical metric with the existing generalization estimations through our benchmarking testbed. Unfortunately, most of the available generalization estimations don't align with the practical measurements using our proposed empirical metric. The illustration of Benchmarking bed is shown below:
 <p align="center">
   <img src="figures/benchbed.png" width="700">
 </p>
+
 
 ## Installation
 To set up the environment:
