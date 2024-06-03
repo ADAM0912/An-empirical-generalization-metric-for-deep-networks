@@ -1,4 +1,4 @@
-Benchmarking Test for deep network generalization
+#Benchmarking Test for deep network generalization
 
 This repo covers an implementation for the Paper An empirical generalization metric to benchmark deep networks, using CIFAR as an example. 
 
