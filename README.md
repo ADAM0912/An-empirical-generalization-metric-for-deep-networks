@@ -29,12 +29,14 @@ python calculate_error_kappa.py \
 ```
 
 **(2) Step 2. Update 3D Array**  
+
 We compute three kinds of statistics related to the distributions of ErrorRate and Kappa across all classes, i.e., means,standard derivations, 10th percentiles, and update them cell-
 wise in the 3D array.You need to modify the file location and different setting according to your situation and the final result is saved as a xlsx file. 
 ```
 python  update_3d_array.py
 ```
 **(3) Step 3.Find the Tradeoff point and output the bound** 
+
 We compute the trade-off points by Eq.4 in the paper and visualize the trade-off points by Eq.5 in the paper based on three pairs of marginal distributions, 
 ```
 python  trade_off_point.py
