@@ -16,34 +16,38 @@ conda env create -f environment.yml
 ```
 
 ## Running
-You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to CIFAR10 by `--dataset cifar10`.  
-**(1) linear probe**
+You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch to imagenet by `--dataset imagenet`.  
+**Step 1. Collect ErrorRate and Kappa data of your test models**
 
-First, Apply linear probe to your model and save the result for future use. 
+In our example, we test the pretrained models of CLIP and EfficientNet on test data across three dimensions (i.e., zero-shot%, weight
+number, SSIM) and store the error rates and Kappas for each class in each cell of a 3D array.
 ```
+python train.py --batch_size 64 \
 python linear_probe.py --batch_size 64 \
   --learning_rate 1e-4 \
+python calculate_error_kappa.py \
 ```
 
-**(2) Calculate accuracy and kappa**  
-You need to modify the file location and different setting according to your situation. 
+**(2) Step 2. Update 3D Array**  
+We compute three kinds of statistics related to the distributions of ErrorRate and Kappa across all classes, i.e., means,standard derivations, 10th percentiles, and update them cell-
+wise in the 3D array.You need to modify the file location and different setting according to your situation and the final result is saved as a xlsx file. 
 ```
-python  calculate_accuracy.py
-python  calculate_kappa.py
+python  update_3d_array.py
 ```
-**(3) Find the Tradeoff point and output the bound** 
-You need to modify the file location and different setting according to your situation. 
+**(3) Step 3.Find the Tradeoff point and output the bound** 
+We compute the trade-off points by Eq.4 in the paper and visualize the trade-off points by Eq.5 in the paper based on three pairs of marginal distributions, 
 ```
 python  trade_off_point.py
+python  visualization.py
 
 ```
-The final result of our benchmark is like this(change clip to your own testing model):
+The final result of our benchmark is like this(CLIP model in cifar100):
 
 | MODEL             | CLIP     |
 |-------------------|----------|
-| GENERALIZATION BOUND | 0.308677 |
-| DIVERSITY BOUND   | 0.293403 |
-| SSIM              | 0.65     |
-| ZERO-SHOT%        | 0        |
-| MODEL SIZE        | 38M      |
+| GENERALIZATION BOUND | 0.852 |
+| DIVERSITY BOUND   | 0.164    |
+| SSIM              | 0.824    |
+| ZERO-SHOT%        | 0.228    |
+| MODEL SIZE        | 56M      |
 
