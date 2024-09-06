@@ -22,10 +22,10 @@ You might use `CUDA_VISIBLE_DEVICES` to set proper number of GPUs, and/or switch
 In our example, we test the pretrained models of CLIP and EfficientNet on test data across three dimensions (i.e., zero-shot%, weight
 number, SSIM) and store the error rates and Kappas for each class in each cell of a 3D array.
 ```
-python train.py --batch_size 64 \
-python linear_probe.py --batch_size 64 \
-  --learning_rate 1e-4 \
-python calculate_error_kappa.py \
+python train.py \
+python linear_probe.py \
+python calculate_error.py \
+python calculate_kappa.py \
 ```
 
 **(2) Step 2. Update 3D Array**  
@@ -33,14 +33,14 @@ python calculate_error_kappa.py \
 We compute three kinds of statistics related to the distributions of ErrorRate and Kappa across all classes, i.e., means,standard derivations, 10th percentiles, and update them cell-
 wise in the 3D array.You need to modify the file location and different setting according to your situation and the final result is saved as a xlsx file. 
 ```
-python  update_3d_array.py
+python  build_3d_array.py
 ```
 **(3) Step 3.Find the Tradeoff point and output the bound** 
 
 We compute the trade-off points by Eq.4 in the paper and visualize the trade-off points by Eq.5 in the paper based on three pairs of marginal distributions, 
 ```
-python  trade_off_point.py
-python  visualization.py
+python  tradeoff_point.py
+python  plot_marginal_distribution.py
 
 ```
 The final result of our benchmark is like this(CLIP model in cifar100):
