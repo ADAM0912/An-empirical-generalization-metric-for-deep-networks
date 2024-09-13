@@ -2,7 +2,6 @@
 
 This repository presents the code implementation of the paper '[A practical generalization metric for deep networks benchmarking](https://arxiv.org/pdf/2409.01498)'.
 
-## Intro of the Benchmarking Process
 Benchmarking is conducted on the CIFAR-100 dataset, with only 50 randomly selected object classes used for training. The remaining classes are reserved for zero-shot testing.
 
 Each pre-trained model is fine-tuned on CIFAR-100 to adapt itself to this task. Subsequently, various model variants are created by adding a single linear probe layer for subsequent zero-shot performance evaluation.
