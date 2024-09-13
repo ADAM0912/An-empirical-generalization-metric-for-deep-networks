@@ -4,7 +4,9 @@ This repository presents the code implementation of the paper '[A practical gene
 
 ## Intro of the Benchmarking Process
 Benchmarking is conducted on the CIFAR-100 dataset, with only 50 randomly selected object classes used for training. The remaining classes are reserved for zero-shot testing.
+
 Each pre-trained model is fine-tuned on CIFAR-100 to adapt itself to this task. Subsequently, various model variants are created by adding a single linear probe layer for subsequent zero-shot performance evaluation.
+
 These models are then tested, collecting metrics such as error rate and kappa. Finally, the trade-off point between these metrics is calculated and visualized in graphs, ready for analysis.
 <p align="center">
   <img src="figures/benchbed.png" width="700">
@@ -75,7 +77,11 @@ Also, you may run this script to draw the graphs.
 ```
 python  plot_marginal_distribution.py
 ```
-![alt text](https://www.markdownguide.org/assets/images/tux.png)
+
+<p align="center">
+  <img src="figures/example_graph.jpg" width="1001">
+</p>
+
 ## Benchmarking Result
 
 The final result of our benchmark(CLIP model in cifar100) are presented below.
