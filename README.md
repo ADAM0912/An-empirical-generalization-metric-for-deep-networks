@@ -22,7 +22,7 @@ These models are then tested, collecting metrics such as error rate and kappa. F
 | Pandas | `pip install pandas` | |
 | utils | `pip install utils` |  |
 | h5py  | `pip install h5py` | |
-| SciPy | `python -m pip install scipy`| |
+| SciPy | `pip install scipy`| |
 | Matplotlib| `pip install matplotlib`| |
 
 
