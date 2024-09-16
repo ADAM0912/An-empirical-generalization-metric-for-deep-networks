@@ -16,7 +16,7 @@ These models are then tested, collecting metrics such as error rate and kappa. F
 
 | | Command | Notes |
 | - | - | - |
-| Pytorch | `conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia` |depending on the GPU configuration, see https://pytorch.org for details/|
+| Pytorch | `conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia` |depending on the GPU configuration, see https://pytorch.org for details|
 | scikit-learn| `conda create -n sklearn-env -c conda-forge scikit-learn` `conda activate sklearn-env`| |
 | EfficientNet_PyTorch | `pip install efficientnet_pytorch` | |
 | Pandas | `pip install pandas` | |
