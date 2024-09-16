@@ -16,13 +16,13 @@ These models are then tested, collecting metrics such as error rate and kappa. F
 
 | | Command | Notes |
 | - | - | - |
-| Pytorch | `conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia` |depending on the GPU configuration, see https://pytorch.org for details/|
+| Pytorch | `conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia` |Depending on the GPU configuration, go to https://pytorch.org for more details|
 | scikit-learn| `conda create -n sklearn-env -c conda-forge scikit-learn` `conda activate sklearn-env`| |
 | EfficientNet_PyTorch | `pip install efficientnet_pytorch` | |
 | Pandas | `pip install pandas` | |
 | utils | `pip install utils` |  |
 | h5py  | `pip install h5py` | |
-| SciPy | `python -m pip install scipy`| |
+| SciPy | `pip install scipy`| |
 | Matplotlib| `pip install matplotlib`| |
 
 
@@ -38,12 +38,12 @@ imagenet`.
 First, all pre-trained models are fine-tuned on CIFAR-100 and then saved.
 
 ```
-python train.py \
+python train.py
 ```
 To enable zero-shot testing, a linear probe layer is added to the tuned model to match the desired output dimension, followed by fine-tuning. The resulting models are then saved.
 
 ```
-python linear_probe.py \
+python linear_probe.py
 ```
 
 **Step 2. Evaluating( ErrorRate and Kappa )**
@@ -53,8 +53,8 @@ The performance of pre-trained CLIP and EfficientNet models is evaluated across 
 The error rates and Kappas for each class are recorded in the corresponding cells of a 3D array.
 
 ```
-python calculate_error.py \
-python calculate_kappa.py \
+python calculate_error.py
+python calculate_kappa.py
 ```
 
 The following script calculates three types of statistics for the distributions of Error Rate and Kappa across all classes: mean, standard deviation, and 10th percentile. These statistics are updated cell-wise within the 3D array. Please note that you may need to adjust file locations and other settings in the script based on your setup. The final results are saved in an XLSX format file. 
