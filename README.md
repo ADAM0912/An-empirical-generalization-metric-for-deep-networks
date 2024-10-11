@@ -84,7 +84,7 @@ python  plot_marginal_distribution.py
 ## Benchmarking Result
 
 The final result of our benchmark(CLIP model in cifar100) are presented below.
-|     **Dataset**         |                     **ImageNet**       | **CIFAR-100** |       
+|  **Dataset**            |                    | **ImageNet** |       | **CIFAR-100** |       |
 |--------------|--------------------|:------------:|:-----:|:-------------:|:-----:|
 | **Model Type** |                    | **CLIP**     | **EFFICIENT NET** | **CLIP**  | **EFFICIENT NET** |
 | **Generalization Bound** | | 0.359         | 0.223 | 0.851          | 0.921 |
@@ -92,6 +92,7 @@ The final result of our benchmark(CLIP model in cifar100) are presented below.
 | **SSIM (lower bound)**   | | 0.900         | 0.906 | 0.614          | 0.848 |
 | **ZEROSHOT (upper bound)** | | 0.375     | 0.286 | 0.379          | 0.167 |
 | **Model Size (lower bound)** | | 167M      | 19M  | 92M            | 9.2M  |
+
 
 
 
