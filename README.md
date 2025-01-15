@@ -80,11 +80,11 @@ The final result of our benchmark(CLIP model in cifar100) are presented below.
 |  **Dataset**            |                    | **ImageNet** |       | **CIFAR-100** |       |
 |--------------|--------------------|:------------:|:-----:|:-------------:|:-----:|
 | **Model Type** |                    | **CLIP**     | **EFFICIENT NET** | **CLIP**  | **EFFICIENT NET** |
-| **Generalization Bound** | | 0.359         | 0.223 | 0.851          | 0.921 |
-| **Diversity Bound**      | | 0.081         | 0.085 | 0.137          | 0.132 |
-| **SSIM (lower bound)**   | | 0.900         | 0.906 | 0.614          | 0.848 |
-| **ZEROSHOT (upper bound)** | | 0.375     | 0.286 | 0.379          | 0.167 |
-| **Model Size (lower bound)** | | 167M      | 19M  | 92M            | 9.2M  |
+| **Generalization Bound** | | 0.279         | 0.284 | 0.657          | 0.600 |
+| **Diversity Bound**      | | 0.276         | 0.280 | 0.668          | 0.608 |
+| **SSIM (lower bound)**   | | 0.874         | 0.805 | 0.949          | 0.937 |
+| **ZEROSHOT (upper bound)** | | 0.285     | 0.295 | 0.182          | 0.258 |
+| **Model Size (lower bound)** | | 116M      | 20M  | 163M           | 22M  |
 
 
 
