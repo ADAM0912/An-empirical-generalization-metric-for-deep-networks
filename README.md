@@ -35,12 +35,7 @@ imagenet`.
 
 **Step 1. Model Preparetion**
 
-First, all pre-trained models are fine-tuned on CIFAR-100 and then saved.
-
-```
-python train.py
-```
-To enable zero-shot testing, a linear probe layer is added to the tuned model to match the desired output dimension, followed by fine-tuning. The resulting models are then saved.
+To enable zero-shot testing, a linear probe layer is added to the tuned model to match the desired output dimension. The resulting linear layers are then saved.
 
 ```
 python linear_probe.py
@@ -65,14 +60,12 @@ python  build_3d_array.py
 
 **Step 3.Benchmark Result Calculation( Tradeoff point and The bound )** 
 
-The trade-off points are calculated using Equation 4 from the paper. These points are then visualized based on the three pairs of marginal distributions, as described by Equation 5.
-
+The trade-off points are calculated using Equation 4 from the paper. It will return you three value which show the tradeoff point in SSIM, ZEROSHOT, Model Size. 
 ```
 python  tradeoff_point.py
-python  plot_marginal_distribution.py
 ```
 
-Also, you may run this script to draw the graphs.
+Enter these points in the plot_marginal_distribution.py and then visualized based on the three pairs of marginal distributions, as described by Equation 5.
 ```
 python  plot_marginal_distribution.py
 ```
