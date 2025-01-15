@@ -2,48 +2,97 @@ import numpy as np
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, ConcatDataset, Subset
+import copy
 import argparse
 from torchvision import transforms, datasets
 import pandas as pd
 import os
 import shutil
+from utils import EarlyStopping, largest_unstructured
 import torch.nn.utils.prune as prune
+# import h5py
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import label_binarize
 from utils import CustomDataset
+import clip
 from scipy.special import softmax
 from efficientnet_pytorch import EfficientNet
+from sklearn.metrics import confusion_matrix
 class Classifier(nn.Module):
     def __init__(self, n_feature=512, n_hidden=1024, n_output=250):
         super(Classifier, self).__init__()
+        # self.n_hidden = torch.nn.Linear(n_feature, n_hidden)
+        # self.out = torch.nn.Linear(n_hidden, n_output)
         self.out = torch.nn.Linear(n_feature, n_output)
 
     def forward(self, x_layer):
+        # feature = self.n_hidden(x_layer)
         feature = self.out(x_layer)
+        # x_layer = torch.nn.functional.softmax(feature)
+        # output = torch.sigmoid(feature)
+
         return feature
 
 
-def load_data(split, dataset_name, datadir, preprocess,ssim, zeroshot_number):
+def save_checkpoint(state, directory):
 
-    if dataset_name == 'CIFAR100':
-        get_dataset = getattr(datasets, dataset_name)
-        if split == 'train':
-            dataset1 = get_dataset(root=datadir, train=True, download=True, transform=preprocess)
-            dataset2 = get_dataset(root=datadir, train=False, download=True, transform=preprocess)
-            dataset = dataset1
-            # breakpoint()
-        if split == 'val':
-            test_dataset = get_dataset(root=datadir, train=False, download=True, transform=preprocess)
-            train_indices = [i for i, (_, label) in enumerate(test_dataset) if label < 50+zeroshot_number]
-            dataset = Subset(test_dataset, train_indices)
-        else:
-            test_dataset = get_dataset(root=datadir, train=True, download=True, transform=preprocess)
-            train_indices = [i for i, (_, label) in enumerate(test_dataset) if label < 50]
-            dataset = Subset(test_dataset, train_indices)
-    if dataset_name == 'GEN':
-        test_dataset = CustomDataset(root_dir=f'generated_datasets/cifar100_{ssim:.2f}', transform=preprocess)
-        train_indices = [i for i, (_, label) in enumerate(test_dataset) if label < 50 + zeroshot_number]
-        dataset = Subset(test_dataset, train_indices)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    checkpoint_file = os.path.join(directory, 'checkpoint.pth')
+    best_model_file = os.path.join(directory, 'model_best.pth')
+    torch.save(state, checkpoint_file)
+    shutil.copyfile(checkpoint_file, best_model_file)
+
+def save_checkpoint_epoch(state, directory,epoch):
+    directory = os.path.join(directory, str(epoch))
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    checkpoint_file = os.path.join(directory, 'checkpoint.pth')
+    best_model_file = os.path.join(directory, 'model_best.pth')
+    torch.save(state, checkpoint_file)
+    shutil.copyfile(checkpoint_file, best_model_file)
+
+def train(args, model, model_classifier, device, train_loader, mean_dict, optimizer, epoch):
+    sum_loss, sum_correct = 0, 0
+
+    optimizerCls = optim.SGD(model_classifier.parameters(), args.learningrate, momentum=args.momentum)
+    # switch to train mode
+    model.train()
+    model_classifier.train()
+    count = 1
+
+    for i, (data, target) in enumerate(train_loader):
+        # breakpoint()
+        # assert not torch.isnan(data).any()
+        # assert not torch.isinf(data).any()
+        # assert not torch.isnan(target).any()
+        data, target = data.to(device).view(data.size(0),-1), target.to(device)
+        feature_output = model(data)
+        output = model_classifier(feature_output.detach())
+        criterion = nn.CrossEntropyLoss()
+        loss = criterion(output, target)
+        # breakpoint()
+        pred = output.max(1)[1]
+        sum_correct += pred.eq(target).sum().item()
+        error = 1 - (sum_correct / len(train_loader.dataset))
+        sum_loss += len(data) * loss.item()
+
+        # compute the gradient and do an SGD step
+        optimizerCls.zero_grad()
+        loss.backward()
+        optimizerCls.step()
+
+        # if count == 1:
+        #     out_cls = output.cpu().detach().numpy()
+        #     count += 1
+        # else:
+        #     out_cls = np.concatenate((out_cls, output.cpu().data.numpy()), axis=0)
+    return sum_loss / len(train_loader.dataset), error
+
+def load_data(split, dataset_name, datadir, preprocess, ssim, zeroshot_number):
+    dataset = CustomDataset(root_dir=f'augmented_dataset_half/cifar100_{ssim:.2f}_{zeroshot_number}',
+                            transform=preprocess)
     return dataset
 
 def validate(args, model, classifier, device, val_loader, criterion):
@@ -52,6 +101,8 @@ def validate(args, model, classifier, device, val_loader, criterion):
     class_total = torch.zeros(num_classes, dtype=torch.float32).to(device)
 
     sum_loss, sum_correct = 0, 0
+    margin = torch.Tensor([]).to(device)
+
     # switch to evaluation mode
     model.eval()
     classifier.eval()
@@ -80,57 +131,46 @@ def validate(args, model, classifier, device, val_loader, criterion):
     # breakpoint()
     return overall_error_rate, sum_loss / len(val_loader.dataset), class_error_rates
 
-def get_all_preds_labels(model, classifier, loader, device):
-    all_preds = torch.tensor([]).to(device)
-    all_labels = torch.tensor([]).to(device)
-    with torch.no_grad():
-        for i, (data, target) in enumerate(loader):
-            data, target = data.to(device), target.to(device)
-            feature_output, _ = model(data)
-            outputs = classifier(feature_output)
-            # breakpoint()
-            all_preds = torch.cat((all_preds, outputs), dim=0)
-            all_labels = torch.cat((all_labels, target), dim=0)
-    return all_preds, all_labels
+def compute_kappa(confusion_matrix):
+    """
+    Compute Kappa for a given confusion matrix.
+
+    Args:
+        confusion_matrix (np.ndarray): Square confusion matrix.
+
+    Returns:
+        k (float): Kappa statistic.
+    """
+    # Total observations
+    n = np.sum(confusion_matrix)
+
+    # Compute observed agreement (P_0)
+    P_0 = np.trace(confusion_matrix) / n
+
+    # Compute row and column margins
+    row_margins = np.sum(confusion_matrix, axis=1)
+    col_margins = np.sum(confusion_matrix, axis=0)
+
+    # Compute expected agreement (P_e)
+    P_e = np.sum((row_margins * col_margins) / (n ** 2))
+
+    # Compute Kappa
+    kappa = (P_0 - P_e) / (1 - P_e)
+
+    return 1 - kappa
+
+class CLIPClassifier(nn.Module):
+    def __init__(self, clip_model,hidden_size, num_classes):
+        super(CLIPClassifier, self).__init__()
+        self.clip_model = clip_model
+        self.classifier = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, images):
+        image_features = self.clip_model.encode_image(images)
+        logits = self.classifier(image_features)
+        return image_features, logits
 
 
-def calculate_kappa (out,class_idx,out_label):
-    # breakpoint()
-    out_bin = np.zeros((out.shape))
-    prob = softmax(out, axis=1)
-    rank = np.argsort(prob,axis=1)
-    hi = prob[:, class_idx]
-    remaining_columns = np.delete(prob, class_idx, axis=1)
-    hmax_remaining = np.max(remaining_columns, axis=1)
-
-    # threshold1 = 0.7
-    threshold1 = 0.2
-    threshold2 = 0.2
-
-    # Applying conditions
-    # all_below_threshold1 = np.all(prob < threshold1, axis=1)
-    all_below_threshold1 = np.all(prob < threshold1, axis=1)
-    abs_diff_le_threshold2 = np.abs(hi - hmax_remaining) <= threshold2
-    hi_gt_hmax_by_threshold2 = hi - hmax_remaining > threshold2
-    hmax_gt_hi_by_threshold2 = hmax_remaining - hi > threshold2
-
-    # Counting based on conditions
-    # d = np.sum(all_below_threshold1)
-    a = np.sum(abs_diff_le_threshold2 & ~all_below_threshold1)
-    c = np.sum(hi_gt_hmax_by_threshold2 & ~all_below_threshold1)
-    b = np.sum(hmax_gt_hi_by_threshold2 & ~all_below_threshold1)
-    d = 10000-a-b-c
-
-    M = a+b+c+d
-    p1 = (a+d)/M
-    p2 = ((a+b)*(a+c)+(c+d)*(b+d))/(M*M)
-    if 1-p2 == 0:
-        k_test = 0.5
-    else:
-        k_test = abs((p1-p2))/(1-p2)
-
-    # breakpoint()
-    return k_test
 
 def main():
 
@@ -180,32 +220,27 @@ def main():
     if args.dataset == 'MNIST': nchannels = 1
     if args.dataset == 'CIFAR100': nclasses = 50+args.zeroshot
 
+
     available_models = ['efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2', 'efficientnet-b3', 'efficientnet-b4',
                         'efficientnet-b5', 'efficientnet-b6', 'efficientnet-b7']
     batchsize = [32, 32, 32, 16, 16, 8, 8, 4]
-    n_zeroshot = [0, 10, 20, 30, 40, 50]
+    n_zeroshot = [0,10, 20, 30, 40, 50]
     ssim_list = [0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0]
+
 
     for model_index, model_type in enumerate(available_models):
          for zeroshot in n_zeroshot:
             for ssim in ssim_list:
 
-                nclasses = 50 + zeroshot
                 args.zeroshot = zeroshot
                 args.prune = prune
-
-                model = EfficientNet.from_pretrained(model_type)
-                model_classifier = Classifier(n_feature=1000, n_hidden=512, n_output=nclasses)
+                nclasses = 50 + zeroshot
+                model = EfficientNet.from_pretrained(model_type).to(device)
+                model_classifier = Classifier(n_feature=1000, n_hidden=512, n_output=nclasses).to(device)
 
                 model = model.to(device)
                 preprocess = transforms.Compose([transforms.Resize(224), transforms.ToTensor(),
                                                  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]), ])
-                model_classifier = model_classifier.to(device)
-                file_location = os.path.join(args.checkpoints_feature,
-                                             str(model_type))
-                best_model_file_feature = os.path.join(file_location, 'model_best.pth')
-                checkpoint = torch.load(best_model_file_feature)
-                model.load_state_dict(checkpoint)
 
                 if ssim == 1.0:
                     val_dataset = load_data('val', 'CIFAR100', args.datadir, preprocess, ssim, zeroshot_number=zeroshot)
@@ -213,44 +248,46 @@ def main():
                     val_loader = DataLoader(val_dataset, batch_size=batchsize[model_index], shuffle=False, **kwargs)
                 else:
                     val_dataset = load_data('val', 'GEN', args.datadir, preprocess, ssim, zeroshot_number=zeroshot)
-
                     val_loader = DataLoader(val_dataset, batch_size=batchsize[model_index], shuffle=False, **kwargs)
-                nclasses = 50 + zeroshot
+
+
 
                 best_model_file_cls = os.path.join('cls_checkpoints_eff', str(model_type), str(zeroshot),
                                                    'checkpoint.pth')
+                # breakpoint()
                 checkpoint = torch.load(best_model_file_cls)
                 model_classifier.load_state_dict(checkpoint)
                 model_classifier = model_classifier.to(device)
 
-                for j, (data, target) in enumerate(val_loader):
-                    data, target = data.to(device), target.to(device)
-                    feature_out = model(data)
-                    # breakpoint()
-                    if j == 0:
-                        out = model_classifier(feature_out).cpu().detach().numpy()
-                        out_label = target.cpu().detach().numpy()
-                    else:
-                        out = np.concatenate((out, model_classifier(feature_out).cpu().detach().numpy()), axis=0)
-                        out_label = np.concatenate((out_label, target.cpu().data.numpy()), axis=0)
+                model.eval()
+                model_classifier.eval()
 
 
-                div_matrix = np.zeros((nclasses, 1))
-                for i in range(nclasses):
-                    k_test = calculate_kappa(out, i, out_label)
-                    div_matrix[i] = k_test
-                k_test_mean = np.mean(div_matrix)
-                print('model_type=', model_type, 'ssim=', ssim, 'zeroshot=', zeroshot, 'k_test=', k_test_mean)
-                # breakpoint()
-                df1 = pd.DataFrame(div_matrix, index=list(set(out_label)))
+
+                all_preds = []
+                all_labels = []
+                with torch.no_grad():
+                    for inputs, labels in val_loader:
+                        inputs, labels = inputs.to(device), labels.to(device)
+                        feature_out = model(inputs)
+                        outputs = model_classifier(feature_out)
+
+                        # Get predicted class indices
+                        _, preds = torch.max(outputs, 1)
+                        all_preds.extend(preds.cpu().numpy())
+                        all_labels.extend(labels.cpu().numpy())
+
+                    # Generate confusion matrix
+                conf_matrix = confusion_matrix(all_labels, all_preds, labels=range(nclasses))
+                kappa = compute_kappa(conf_matrix)
+                print('model_type=', model_type, 'ssim=', ssim, 'zeroshot=', zeroshot, 'k_test=', kappa)
+                df1 = pd.DataFrame(conf_matrix)
                 models_name = ['efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2', 'efficientnet-b3',
                                'efficientnet-b4', 'efficientnet-b5', 'efficientnet-b6', 'efficientnet-b7']
                 file_location = os.path.join('experiment result eff',
                                              str(models_name[model_index]) + str('_') + str(ssim) + str(
                                                  '_zs') + str(zeroshot) + str('_') + 'kappa.xlsx')
                 df1.to_excel(file_location)
-
-
 
                 # breakpoint()
 

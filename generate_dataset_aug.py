@@ -11,12 +11,10 @@ import os
 import shutil
 from utils import EarlyStopping, largest_unstructured
 import torch.nn.utils.prune as prune
-# import h5py
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import label_binarize
 from utils import CustomDataset
-import clip
 from scipy.special import softmax
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision.transforms.functional as TF

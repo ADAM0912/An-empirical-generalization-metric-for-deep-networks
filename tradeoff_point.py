@@ -6,11 +6,13 @@ from scipy.optimize import minimize
 from scipy.interpolate import griddata
 
 # Define your custom problem
-data_all = pd.read_excel(('output_eff_cifar.xlsx'), header=None)
+data_all = pd.read_excel(('output_eff_imagenet.xlsx'), header=None)
 data_all.columns = ['randomness', 'zeroshot', 'amount', 'f1', 'f2','f3', 'f4','f5','f6']
 # Lists as provided
 randomness = [0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0]
 zeroshot = [0, 10, 20, 30, 40, 50]
+# zeroshot = [0,0.167,0.286,0.375,0.444,0.500]
+# amount = [64, 128, 256, 512, 1024]
 model_name = data_all['amount'][1:].unique()
 amount = [5.3,7.8,9.2,12,19,30,43,66]
 zeroshot_percent = [0, 0.167, 0.286, 0.375, 0.444, 0.500]
@@ -61,9 +63,9 @@ def value_to_number(y):
         return x
 # print(value_to_number(1))
 data_all = data_all[1:]
-data_all['randomness'] = 1-data_all['randomness']
-data_all['amount'] = 1-data_all['amount']
-
+# data_all['randomness'] = 1-data_all['randomness']
+# data_all['amount'] = 1-data_all['amount']
+data_all['zeroshot'] = 1-data_all['zeroshot']
 
 def idw_interpolation_3d_grid(x, y, z, values, xi, yi, zi, power=2):
     """
@@ -107,6 +109,10 @@ zeroshot_values = np.array(data_all['zeroshot'].unique())
 # amount_values = sorted(data_all['amount'].unique())
 amount_values =  np.array(data_all['amount'].unique())
 
+# randomness_values = sorted(data_all['randomness'].unique())
+# zeroshot_values = sorted(data_all['zeroshot'].unique())
+# amount_values =  sorted(data_all['amount'].unique())
+# Prepare values for interpolation
 def prepare_values_for_interpolation(column_name):
     # Reshape the data to match the grid
     reshaped_data = data_all.pivot_table(index='randomness', columns=['zeroshot', 'amount'], values=column_name).values
@@ -121,6 +127,18 @@ f5_values = prepare_values_for_interpolation('f5')
 f6_values = prepare_values_for_interpolation('f6')
 
 def interpolate_f1_f2(x1, x2, x3):
+    # randomness = 0.6+(x1-1)*0.05
+    # zeroshot   = (x2-1)*10
+    # # zeroshot = (x2) * 10
+    # amount = value_to_number(x3)
+
+
+    # f1_interp= idw_interpolation_3d_grid(randomness_values, zeroshot_values, amount_values, f1_values, x1, x2, x3)
+    # f2_interp = idw_interpolation_3d_grid(randomness_values, zeroshot_values, amount_values, f2_values, x1, x2, x3)
+    # f3_interp = idw_interpolation_3d_grid(randomness_values, zeroshot_values, amount_values, f3_values, x1, x2, x3)
+    # f4_interp = idw_interpolation_3d_grid(randomness_values, zeroshot_values, amount_values, f4_values, x1, x2, x3)
+    # f5_interp = idw_interpolation_3d_grid(randomness_values, zeroshot_values, amount_values, f5_values, x1, x2, x3)
+    # f6_interp = idw_interpolation_3d_grid(randomness_values, zeroshot_values, amount_values, f6_values, x1, x2, x3)
     points = np.array((data_all['randomness'],data_all['zeroshot'],data_all['amount'])).T
     request = np.array([[x1, x2, x3]])
     f1_interp = griddata(points, data_all['f1'],request)
@@ -134,55 +152,54 @@ def interpolate_f1_f2(x1, x2, x3):
 
 
 
-def objective_function(x):
+def objective_function(vars):
     # Assuming interpolate_f1_f2 is defined elsewhere
-    error, kappa, std_error, std_kappa, percentile_error, percentile_kappa = interpolate_f1_f2(x[0], x[1], x[2])
+    x, y, z, c1, c2, c3 = vars
+    error, kappa, std_error, std_kappa, percentile_error, percentile_kappa = interpolate_f1_f2(x, y, z)
+    # return 1 - acc + kappa
     output = error + kappa + std_error + std_kappa + percentile_error + percentile_kappa
-    return output
+    # imagenet best    a1=0.03 a2=0.25 a3=0.25
+    # a1=0.285
+    # a2=0.8
+    # a3=0.8
+    # a1=0.80
+    # a2=0.25
+    # a3=0.25
+    a1=1
+    a2=1
+    a3=1
+    boundary_penalty = 0
+    for var, (lb, ub) in zip(vars, bnds):
+        penalty_factor = 0.5  # Larger values discourage being near boundaries
+        boundary_penalty += penalty_factor * (np.exp(-10 * (var - lb)) + np.exp(-10 * (ub - var)))
+    return output + a1*c1**2 + a2*c2**2 + a3*c3**2 + boundary_penalty
+    # return output + a1*c1**2 + a2*c2**2 + a3*c3**2
 
 
+def constraint1(vars):
+    x, y, z, c1, c2, c3 = vars
+    return c1 - x
 
-MAX_ITERS = 10
-def cons(x, C):
-    con1 = {'type': 'ineq', 'fun': lambda x: np.array([x[0] - C[0]])}
-    con2 = {'type': 'ineq', 'fun': lambda x: np.array([x[1] - C[1]])}
-    con3 = {'type': 'ineq', 'fun': lambda x: np.array([x[2] - C[2]])}
+def constraint2(vars):
+    x, y, z, c1, c2, c3 = vars
+    return c2 - y
 
-    return  [con1,con2,con3]
+def constraint3(vars):
+    x, y, z, c1, c2, c3 = vars
+    return c3 - z
+
+x0 = [0.6, 0.5, 0, 1, 1, 1]
+
+bnds = [(0.6, 1), (0.5, 1), (0, 1), (0.6, 1), (0.5, 1), (0, 1)]
+
+cons = [{'type': 'ineq', 'fun': constraint1},
+        {'type': 'ineq', 'fun': constraint2},
+        {'type': 'ineq', 'fun': constraint3}]
 
 
+solution = minimize(objective_function, x0, method='SLSQP', bounds=bnds, constraints=cons)
+x, y, z, c1, c2, c3 = solution.x
 
+print(f'tradeoff_point: x = {x}, y = {1-y}, z = {denormalize_value(z)}, c1 = {c1}, c2 = {c2}, c3 = {c3}')
+#
 
-def minimax_optimization(initial_x, initial_C, max_iters):
-    epsilon_x = 0.4
-    epsilon_c = 0.02
-    threshold = 2.2
-    f_last = 0
-    C = initial_C + epsilon_c*np.random.rand(3)
-
-    for t in range(max_iters):
-        x = initial_x - epsilon_x * np.random.rand(3)
-        # x[0] = 0.2
-        # x[2] = 0.5
-        print(x,C)
-        res = minimize(lambda x: objective_function(x), x,  bounds=[(C[0],0.4), (C[1],0.5), (C[2],1)], constraints = cons(x, C), method = 'SLSQP')
-        x = res.x
-        print(res.fun,x)
-        if res.fun > threshold:
-            print(res.fun, x, C)
-            break
-        if res.fun < f_last:
-            C = C + epsilon_c*np.random.rand(3)
-        else:
-            f_last = res.fun
-
-    return x, C
-
-initial_C = np.array([0.0, 0.0, 0.0])
-initial_x = np.array([0.4,0.5,1])
-max_iters = 200
-
-optimal_x, optimal_C = minimax_optimization(initial_x, initial_C, max_iters)
-
-# print(optimal_x)
-print('ssim ',1-optimal_x[0],'zeroshot ',optimal_x[1],'weightnum',1-optimal_x[2])
