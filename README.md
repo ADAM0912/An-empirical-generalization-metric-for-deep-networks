@@ -71,7 +71,7 @@ python  plot_marginal_distribution.py
 ```
 
 <p align="center">
-  <img src="figures/example_graph.jpg" width="1001">
+  <img src="figures/example_graph.png" width="1001">
 </p>
 
 ## Benchmarking Result
